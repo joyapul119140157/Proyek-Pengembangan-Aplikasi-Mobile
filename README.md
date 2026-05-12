@@ -1,8 +1,6 @@
 # 📚 StudyMate
 
-![CI](https://github.com/ThDptr/StudyMate/actions/workflows/ci.yml/badge.svg)
 
-> Catat. Pahami. Kuasai Materi.
 
 Aplikasi mobile multiplatform (Android-first) untuk mahasiswa yang membantu **mencatat materi kuliah**, **merangkum otomatis dengan AI**, **membuat soal latihan**, dan **mengingatkan jadwal belajar** berdasarkan kalender ujian pribadi.
 
