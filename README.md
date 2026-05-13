@@ -1,4 +1,4 @@
-# 📚 StudyMate
+# 🐬 StudyMate
 
 <img width="1024" height="543" alt="image" src="https://github.com/user-attachments/assets/c7546e6c-321d-4f36-9086-34ee10f5dcb2" />
 
