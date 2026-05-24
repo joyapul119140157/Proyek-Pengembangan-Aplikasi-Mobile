@@ -1,6 +1,10 @@
 package com.studymate.presentation
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
 import app.cash.turbine.test
+import com.studymate.data.local.datastore.UserPreferences
 import com.studymate.data.repository.FakeNoteRepository
 import com.studymate.domain.model.Note
 import com.studymate.domain.model.NoteCategory
@@ -14,6 +18,8 @@ import com.studymate.presentation.screens.home.HomeUiState
 import com.studymate.presentation.screens.home.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -44,6 +50,7 @@ class HomeViewModelTest {
     private lateinit var getAllNotesUseCase: GetAllNotesUseCase
     private lateinit var searchNotesUseCase: SearchNotesUseCase
     private lateinit var deleteNoteUseCase: DeleteNoteUseCase
+    private lateinit var userPreferences: UserPreferences
     private lateinit var viewModel: HomeViewModel
     
     @BeforeTest
@@ -55,11 +62,25 @@ class HomeViewModelTest {
         searchNotesUseCase = SearchNotesUseCase(repository)
         deleteNoteUseCase = DeleteNoteUseCase(repository)
         
+        // Mock DataStore untuk UserPreferences
+        val fakeDataStore = object : DataStore<Preferences> {
+            private val _data = MutableStateFlow(emptyPreferences())
+            override val data: Flow<Preferences> = _data
+            override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
+                val current = _data.value
+                val new = transform(current)
+                _data.value = new
+                return new
+            }
+        }
+        userPreferences = UserPreferences(fakeDataStore)
+        
         viewModel = HomeViewModel(
             getAllNotesUseCase = getAllNotesUseCase,
             searchNotesUseCase = searchNotesUseCase,
             deleteNoteUseCase = deleteNoteUseCase,
-            repository = repository
+            repository = repository,
+            userPreferences = userPreferences
         )
     }
     
@@ -73,21 +94,25 @@ class HomeViewModelTest {
     @Test
     fun `initial state should be Loading then Empty`() = runTest {
         viewModel.uiState.test {
-            // Initial loading state
+            // Initial loading state (dari initialValue di stateIn)
             val loading = awaitItem()
-            assertTrue(loading is HomeUiState.Loading)
+            assertTrue(loading.isLoading)
             
-            // After loading, should be empty (no notes)
+            // Advance time untuk melewati debounce(300) di HomeViewModel
+            testScheduler.advanceTimeBy(400)
             advanceUntilIdle()
-            val empty = awaitItem()
-            assertTrue(empty is HomeUiState.Empty)
+            
+            // Setelah loading dan combine, state harus tidak loading dan kosong
+            val state = awaitItem()
+            assertTrue(!state.isLoading)
+            assertTrue(state.notes.isEmpty())
             
             cancelAndIgnoreRemainingEvents()
         }
     }
     
     @Test
-    fun `state should be Success when notes exist`() = runTest {
+    fun `state should show notes when they exist`() = runTest {
         // Arrange
         repository.insertNote(createTestNote("Note 1"))
         repository.insertNote(createTestNote("Note 2"))
@@ -97,17 +122,20 @@ class HomeViewModelTest {
             getAllNotesUseCase = getAllNotesUseCase,
             searchNotesUseCase = searchNotesUseCase,
             deleteNoteUseCase = deleteNoteUseCase,
-            repository = repository
+            repository = repository,
+            userPreferences = userPreferences
         )
         
         // Act & Assert
         vm.uiState.test {
-            skipItems(1) // Skip loading
+            skipItems(1) // Skip initial loading
+            
+            testScheduler.advanceTimeBy(400)
             advanceUntilIdle()
             
             val state = awaitItem()
-            assertTrue(state is HomeUiState.Success)
-            assertEquals(2, (state as HomeUiState.Success).notes.size)
+            assertTrue(!state.isLoading)
+            assertEquals(2, state.notes.size)
             
             cancelAndIgnoreRemainingEvents()
         }
@@ -125,25 +153,25 @@ class HomeViewModelTest {
             getAllNotesUseCase = getAllNotesUseCase,
             searchNotesUseCase = searchNotesUseCase,
             deleteNoteUseCase = deleteNoteUseCase,
-            repository = repository
+            repository = repository,
+            userPreferences = userPreferences
         )
         
         vm.uiState.test {
             skipItems(1) // Skip loading
+            testScheduler.advanceTimeBy(400)
             advanceUntilIdle()
-            skipItems(1) // Skip initial success
+            skipItems(1) // Skip initial empty results
             
             // Act
             vm.onSearchQueryChange("Kotlin")
-            advanceUntilIdle()
             
             // Assert - wait for debounce
             testScheduler.advanceTimeBy(400)
             advanceUntilIdle()
             
             val state = expectMostRecentItem()
-            assertTrue(state is HomeUiState.Success)
-            assertEquals(1, (state as HomeUiState.Success).notes.size)
+            assertEquals(1, state.notes.size)
             assertEquals("Kotlin Guide", state.notes.first().title)
             
             cancelAndIgnoreRemainingEvents()
@@ -158,12 +186,11 @@ class HomeViewModelTest {
         
         // Assert
         viewModel.uiState.test {
-            val state = awaitItem()
-            when (state) {
-                is HomeUiState.Success -> assertEquals("", state.query)
-                is HomeUiState.Empty -> assertEquals("", state.query)
-                else -> {} // OK
-            }
+            testScheduler.advanceTimeBy(400)
+            advanceUntilIdle()
+            
+            val state = expectMostRecentItem()
+            assertEquals("", state.query)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -180,22 +207,25 @@ class HomeViewModelTest {
             getAllNotesUseCase = getAllNotesUseCase,
             searchNotesUseCase = searchNotesUseCase,
             deleteNoteUseCase = deleteNoteUseCase,
-            repository = repository
+            repository = repository,
+            userPreferences = userPreferences
         )
         
         vm.uiState.test {
             skipItems(1) // Loading
+            testScheduler.advanceTimeBy(400)
             advanceUntilIdle()
             skipItems(1) // Initial success
             
             // Act
             vm.onCategorySelected(NoteCategory.WORK)
+            
+            testScheduler.advanceTimeBy(400)
             advanceUntilIdle()
             
             // Assert
             val state = expectMostRecentItem()
-            assertTrue(state is HomeUiState.Success)
-            assertEquals(1, (state as HomeUiState.Success).notes.size)
+            assertEquals(1, state.notes.size)
             assertEquals(NoteCategory.WORK, state.notes.first().category)
             
             cancelAndIgnoreRemainingEvents()
