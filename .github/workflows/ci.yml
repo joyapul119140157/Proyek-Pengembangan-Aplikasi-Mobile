@@ -2,9 +2,9 @@ name: StudyMate CI
 
 on:
   push:
-    branches: [ "main", "project/123140043-119140157-StudyMate" ]
+    branches: [ "main", "project/123140043-119140157-StudyMate","sprint_2" ]
   pull_request:
-    branches: [ "main", "project/123140043-119140157-StudyMate" ]
+    branches: [ "main", "project/123140043-119140157-StudyMate","sprint_2" ]
 
 jobs:
   build:
