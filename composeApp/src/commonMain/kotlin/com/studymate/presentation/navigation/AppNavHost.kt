@@ -1,5 +1,6 @@
 package com.studymate.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -7,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
@@ -22,7 +24,10 @@ import com.studymate.presentation.screens.quiz.QuizScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun AppNavHost() {
+fun AppNavHost(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -79,7 +84,11 @@ fun AppNavHost() {
             composable(Screen.Calendar.route) { CalendarScreen() }
             composable(Screen.Profile.route) {
                 val viewModel: ProfileViewModel = koinViewModel()
-                ProfileScreen(viewModel)
+                ProfileScreen(
+                    viewModel = viewModel,
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle
+                )
             }
             composable(
                 route = Screen.NoteDetail.route,

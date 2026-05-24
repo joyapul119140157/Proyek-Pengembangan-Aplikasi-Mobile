@@ -18,6 +18,8 @@ import com.studymate.presentation.screens.notes.NotesViewModel
 import com.studymate.presentation.screens.profile.ProfileViewModel
 import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
+import org.koin.core.module.Module
+import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
 val networkModule = module {
@@ -48,8 +50,9 @@ val viewModelModule = module {
 
 val appModules = listOf(networkModule, databaseModule, dataModule, useCaseModule, viewModelModule)
 
-fun initKoin(config: (org.koin.core.module.Module.() -> Unit)? = null) {
+fun initKoin(config: KoinAppDeclaration? = null) {
     startKoin {
+        config?.invoke(this)
         modules(appModules)
     }
 }

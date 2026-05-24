@@ -3,44 +3,289 @@ package com.studymate.presentation.screens.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.studymate.domain.model.Note
+import com.studymate.presentation.theme.GradientEnd
+import com.studymate.presentation.theme.GradientStart
+import com.studymate.presentation.theme.TextGray
+import noteai.composeapp.generated.resources.Res
+import noteai.composeapp.generated.resources.app_logo
+import org.jetbrains.compose.resources.painterResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("🐬 StudyMate") }) }
+        containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = { HomeFAB() }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
             when (val state = uiState) {
                 is HomeUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                is HomeUiState.Error -> Column(modifier = Modifier.align(Alignment.Center)) {
-                    Text(state.message, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { viewModel.retry() }) { Text("Retry") }
-                }
+                is HomeUiState.Error -> ErrorContent(state.message, onRetry = { viewModel.retry() })
                 is HomeUiState.Success -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    HomeContent(
+                        state = state,
+                        onRefreshMantra = { viewModel.refreshMantra() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeContent(
+    state: HomeUiState.Success,
+    onRefreshMantra: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        MockupHeaderSection()
+
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(28.dp)
+        ) {
+            DailyMantraSection(state.dailyMantra, onRefreshMantra)
+            DailyStreakSection(state.currentStreak)
+            QuickSnippetsSection(state.recentNotes)
+            LastNoteSection(state.recentNotes.firstOrNull())
+            Spacer(modifier = Modifier.height(100.dp))
+        }
+    }
+}
+
+@Composable
+private fun MockupHeaderSection() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(320.dp) // Ubah angka ini untuk tinggi kotak
+            .clip(RoundedCornerShape(bottomStart = 45.dp, bottomEnd = 45.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFF9C27B0), Color(0xFFE91E63))
+                )
+            )
+    ) {
+        // Logo dibuat FULL memenuhi kotak
+        Image(
+            painter = painterResource(Res.drawable.app_logo),
+            contentDescription = "StudyMate Logo",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop // 'Crop' untuk memenuhi seluruh kotak
+        )
+        
+        // Notification bell tetap di pojok atas
+        IconButton(
+            onClick = {},
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 40.dp, end = 20.dp)
+                .size(45.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.15f))
+        ) {
+            Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.White)
+        }
+    }
+}
+
+@Composable
+fun HomeFAB() {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Column(horizontalAlignment = Alignment.End) {
+        // Quick Menu Bubble
+        if (isExpanded) {
+            Surface(
+                color = Color(0xFF251849),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Text("Teks Cepat", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Description, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Text("Catatan", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+        
+        // Main FAB
+        Box(
+            modifier = Modifier
+                .size(70.dp)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(Color(0xFF9C27B0), Color(0xFFE91E63))))
+                .border(2.dp, Color.White.copy(alpha = 0.3f), CircleShape)
+                .clickable { isExpanded = !isExpanded },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.Add, 
+                contentDescription = null, 
+                tint = Color.White, 
+                modifier = Modifier
+                    .size(32.dp)
+                    .rotate(if (isExpanded) 45f else 0f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DailyMantraSection(mantra: String, onRefreshClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "Daily Mantra", 
+            color = MaterialTheme.colorScheme.onBackground, 
+            style = MaterialTheme.typography.titleMedium, 
+            fontWeight = FontWeight.Bold
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth().border(
+                1.dp, 
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), 
+                RoundedCornerShape(16.dp)
+            ),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    mantra,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                IconButton(
+                    onClick = onRefreshClick,
+                    modifier = Modifier.size(32.dp).clip(CircleShape).background(
+                        Brush.linearGradient(listOf(GradientStart, GradientEnd))
+                    )
+                ) {
+                    Icon(Icons.Default.Autorenew, contentDescription = "Ganti Mantra", tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun DailyStreakSection(streak: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Daily Streak", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Card(
+            modifier = Modifier.fillMaxWidth().height(140.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Brush.horizontalGradient(listOf(GradientStart, GradientEnd)))
+            ) {
+                // Simplified Chart Graphic
+                Canvas(modifier = Modifier.fillMaxSize().padding(top = 60.dp)) {
+                    val width = size.width
+                    val height = size.height
+                    repeat(6) { i ->
+                        drawRect(
+                            color = Color.White.copy(alpha = 0.2f),
+                            topLeft = androidx.compose.ui.geometry.Offset(width * (0.1f + i * 0.15f), height * (0.2f + i * 0.1f)),
+                            size = androidx.compose.ui.geometry.Size(width * 0.1f, height)
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text("$streak Hari!", color = Color.White, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+                    Text("minimal 1 note daily", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickSnippetsSection(notes: List<Note>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            "Quick Snippets", 
+            color = MaterialTheme.colorScheme.onBackground, 
+            style = MaterialTheme.typography.titleMedium, 
+            fontWeight = FontWeight.Bold
+        )
+        Text("Show the latest unrefined notes", color = TextGray, style = MaterialTheme.typography.labelSmall)
+        
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (notes.isEmpty()) {
+                item { Text("No unrefined notes", color = TextGray) }
+            } else {
+                items(notes) { note ->
+                    Card(
+                        modifier = Modifier.size(120.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        GreetingCard(userName = state.userName)
-                        StreakCard(streak = state.currentStreak)
-                        DailyMantraCard(mantra = state.dailyMantra)
-                        QuickSnippetsSection(recentNotes = state.recentNotes)
+                        Text(
+                            note.rawContent,
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 5,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -49,70 +294,49 @@ fun HomeScreen(viewModel: HomeViewModel) {
 }
 
 @Composable
-private fun GreetingCard(userName: String) {
-    Column {
-        Text("Halo, $userName! 👋", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Siap untuk belajar hal baru hari ini?", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.secondary)
-    }
-}
-
-@Composable
-fun StreakCard(streak: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("🔥", style = MaterialTheme.typography.displaySmall)
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(streak.toString(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                Text("Hari Berturut-turut", style = MaterialTheme.typography.labelLarge)
-            }
-        }
-    }
-}
-
-@Composable
-fun DailyMantraCard(mantra: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Icon(Icons.Default.FormatQuote, contentDescription = null)
-            Text(mantra, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-        }
-    }
-}
-
-@Composable
-private fun QuickSnippetsSection(recentNotes: List<Note>) {
+private fun LastNoteSection(note: Note?) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("📋 Catatan Terbaru", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        if (recentNotes.isEmpty()) {
-            Text("Belum ada catatan terbaru.")
-        } else {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(recentNotes) { note ->
-                    NoteSnippetCard(note = note)
-                }
+        Text(
+            "Terakhir Kamu Catat", 
+            color = MaterialTheme.colorScheme.onBackground, 
+            style = MaterialTheme.typography.titleMedium, 
+            fontWeight = FontWeight.Bold
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    note?.title ?: "Untitled", 
+                    color = MaterialTheme.colorScheme.onSurface, 
+                    style = MaterialTheme.typography.titleSmall, 
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    note?.rawContent ?: "Isi catatan...", 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                    style = MaterialTheme.typography.bodySmall, 
+                    maxLines = 2
+                )
             }
         }
     }
 }
 
 @Composable
-fun NoteSnippetCard(note: Note) {
-    Card(modifier = Modifier.width(200.dp)) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(note.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(note.subject, style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(note.rawContent, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
+private fun ErrorContent(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) { Text("Retry") }
     }
 }

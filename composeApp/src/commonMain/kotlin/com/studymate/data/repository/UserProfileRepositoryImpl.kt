@@ -30,8 +30,15 @@ class UserProfileRepositoryImpl(
                 name = profile.name,
                 nim = profile.nim,
                 currentStreak = profile.currentStreak.toLong(),
-                lastStudyDate = profile.lastStudyDate
+                lastStudyDate = profile.lastStudyDate,
+                dailyMantra = profile.dailyMantra
             )
+        }
+    }
+
+    override suspend fun updateMantra(mantra: String) {
+        withContext(Dispatchers.IO) {
+            queries.updateMantra(mantra)
         }
     }
 
@@ -41,7 +48,8 @@ class UserProfileRepositoryImpl(
             name = name,
             nim = nim,
             currentStreak = currentStreak.toInt(),
-            lastStudyDate = lastStudyDate
+            lastStudyDate = lastStudyDate,
+            dailyMantra = dailyMantra
         )
     }
 }

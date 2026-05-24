@@ -39,16 +39,24 @@ class HomeViewModel(
                 val userName = profile?.name ?: "Mahasiswa"
                 val streak = profile?.currentStreak ?: 0
                 val recentNotes = notes.take(3)
+                val mantra = profile?.dailyMantra ?: mantras.random()
                 
                 HomeUiState.Success(
                     userName = userName,
                     currentStreak = streak,
                     recentNotes = recentNotes,
-                    dailyMantra = mantras.random()
+                    dailyMantra = mantra
                 )
             }.collect {
                 _uiState.emit(it)
             }
+        }
+    }
+
+    fun refreshMantra() {
+        viewModelScope.launch {
+            val newMantra = mantras.filter { it != (uiState.value as? HomeUiState.Success)?.dailyMantra }.random()
+            profileRepository.updateMantra(newMantra)
         }
     }
 

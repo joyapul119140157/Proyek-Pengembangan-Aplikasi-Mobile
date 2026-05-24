@@ -1,8 +1,14 @@
 package com.studymate.presentation.screens.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,14 +18,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.studymate.domain.model.UserProfile
+import noteai.composeapp.generated.resources.Res
+import noteai.composeapp.generated.resources.app_logo
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel) {
+fun ProfileScreen(
+    viewModel: ProfileViewModel,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("👤 Profil") }) }
+        topBar = { 
+            CenterAlignedTopAppBar(
+                title = { Text("Profil Pengguna", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = onThemeToggle) {
+                        Icon(
+                            if (isDarkTheme) Icons.Default.LightMode 
+                            else Icons.Default.DarkMode,
+                            contentDescription = "Toggle Theme"
+                        )
+                    }
+                }
+            ) 
+        }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val state = uiState) {
@@ -64,26 +90,77 @@ private fun OnboardingForm(onSave: (String, String) -> Unit) {
 @Composable
 private fun ProfileContent(profile: UserProfile, onEditClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.size(100.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                profile.name.take(1).uppercase(),
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onPrimary
+            Image(
+                painter = painterResource(Res.drawable.app_logo),
+                contentDescription = "Profile Avatar",
+                modifier = Modifier.fillMaxSize()
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(profile.name, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-        Text(profile.nim, style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("🔥 ${profile.currentStreak} hari berturut-turut", style = MaterialTheme.typography.bodyLarge)
+        Text(profile.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+        Text(profile.nim, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.outline)
+        
         Spacer(modifier = Modifier.height(32.dp))
-        OutlinedButton(onClick = onEditClick) { Text("Edit Profil") }
+        
+        Text("Statistik Belajar", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Heatmap Placeholder
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Learning Heatmap", style = MaterialTheme.typography.titleSmall)
+                Spacer(modifier = Modifier.height(12.dp))
+                // Grid of small boxes for heatmap
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    repeat(4) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            repeat(20) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                                        .background(
+                                            if ((0..10).random() > 7) MaterialTheme.colorScheme.primary 
+                                            else MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        OutlinedButton(
+            onClick = onEditClick,
+            modifier = Modifier.fillMaxWidth()
+        ) { 
+            Text("Edit Profil") 
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        TextButton(onClick = {}) {
+            Text("Tentang StudyMate", color = MaterialTheme.colorScheme.outline)
+        }
     }
 }
 

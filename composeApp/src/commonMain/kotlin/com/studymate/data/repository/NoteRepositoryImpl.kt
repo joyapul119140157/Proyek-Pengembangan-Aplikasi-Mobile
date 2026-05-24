@@ -39,17 +39,19 @@ class NoteRepositoryImpl(
             .map { list -> list.map { it.toDomain() } }
     }
 
-    override fun insertNote(note: Note): Long {
-        queries.insertNote(
-            title = note.title,
-            rawContent = note.rawContent,
-            refinedContent = note.refinedContent,
-            subject = note.subject,
-            isRefined = if (note.isRefined) 1L else 0L,
-            createdAt = note.createdAt,
-            updatedAt = note.updatedAt
-        )
-        return queries.lastInsertRowId().executeAsOne()
+    override suspend fun insertNote(note: Note): Long {
+        return withContext(Dispatchers.IO) {
+            queries.insertNote(
+                title = note.title,
+                rawContent = note.rawContent,
+                refinedContent = note.refinedContent,
+                subject = note.subject,
+                isRefined = if (note.isRefined) 1L else 0L,
+                createdAt = note.createdAt,
+                updatedAt = note.updatedAt
+            )
+            queries.lastInsertRowId().executeAsOne()
+        }
     }
 
     override suspend fun updateNote(note: Note) {
