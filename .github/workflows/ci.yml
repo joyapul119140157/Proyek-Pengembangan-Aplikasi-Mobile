@@ -2,10 +2,9 @@ name: CI
 
 on:
   push:
-  project/123140043-119140157-StudyMate_2
-    branches: [ main, development,project/123140043-119140157-StudyMate ]
+    branches: ["main", "development", "project/123140043-119140157-StudyMate", "sprint_2"]
   pull_request:
-    branches: [ main, development,project/123140043-119140157-StudyMate ]
+    branches: ["main", "development", "project/123140043-119140157-StudyMate", "sprint_2"]
 
 jobs:
   build-and-test:
@@ -18,44 +17,36 @@ jobs:
         uses: actions/checkout@v4
 
       # 2. Setup JDK 17
-=======
-    branches: [ "main" , "project/123140043-119140157-StudyMate","sprint_2"]
-  pull_request:
-    branches: [ "main" , "project/123140043-119140157-StudyMate","sprint_2"]
-
-jobs:
-  build:
-    name: Build & Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-project/123140043-119140157-StudyMate
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
+          distribution: 'zulu'
           java-version: '17'
-          distribution: 'temurin'
- project/123140043-119140157-StudyMate_2
-          cache: gradle
 
-      # 3. Beri permission ke gradlew
+      # 3. Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+
+      # 4. Create local.properties untuk API Key Gemini
+      - name: Create local.properties
+        run: |
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > local.properties
+
+      # 5. Grant execute permission for gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4. Buat local.properties
-      - name: Create local.properties
-        run: |
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> local.properties
-          echo "sdk.dir=$ANDROID_HOME" >> local.properties
+      # 6. Run unit tests
+      - name: Run unit tests
+        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon
 
-      # 5. Build APK debug (skip unit test sementara)
+      # 7. Build Debug APK
       - name: Build Debug APK
-        run: ./gradlew :composeApp:assembleDebug -x test --stacktrace
+        run: ./gradlew :composeApp:assembleDebug --no-daemon --stacktrace
 
-      # 6. Upload APK sebagai artifact
+      # 8. Upload APK sebagai artifact
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         if: success()
@@ -63,31 +54,3 @@ project/123140043-119140157-StudyMate
           name: StudyMate-debug-apk
           path: composeApp/build/outputs/apk/debug/*.apk
           retention-days: 7
-=======
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.7
-
-      - name: Create local.properties
-        run: |
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > local.properties
-
-      - name: Build project
-        run: gradle assembleDebug --no-daemon
-
-      - name: Run unit tests
-        run: gradle :composeApp:testDebugUnitTest --no-daemon
-
-      - name: Build debug APK
-        run: gradle :composeApp:assembleDebug --no-daemon
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: composeApp/build/outputs/apk/debug/*.apk
-
-
- project/123140043-119140157-StudyMate
