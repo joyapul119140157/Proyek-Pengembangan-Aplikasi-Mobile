@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" , "project/123140043-119140157-StudyMate","sprint_2"]
   pull_request:
-    branches: [ "main", "project/123140043-119140157-StudyMate","sprint_2" ]
+    branches: [ "main" , "project/123140043-119140157-StudyMate","sprint_2"]
 
 jobs:
   build:
@@ -23,19 +23,21 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
 
       - name: Create local.properties
         run: |
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > local.properties
 
       - name: Build project
-        run: ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Run unit tests
-        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon
+        run: gradle :composeApp:testDebugUnitTest --no-daemon
 
       - name: Build debug APK
-        run: ./gradlew :composeApp:assembleDebug --no-daemon
+        run: gradle :composeApp:assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
