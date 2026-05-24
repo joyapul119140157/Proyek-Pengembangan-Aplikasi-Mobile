@@ -1,5 +1,9 @@
 # 🐬 StudyMate
+
 [![CI](https://github.com/joyapul119140157/Proyek-Pengembangan-Aplikasi-Mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/joyapul119140157/Proyek-Pengembangan-Aplikasi-Mobile/actions/workflows/ci.yml)
+<img width="1024" height="543" alt="image" src="https://github.com/user-attachments/assets/c7546e6c-321d-4f36-9086-34ee10f5dcb2" />
+
+
 <img width="1024" height="543" alt="image" src="https://github.com/user-attachments/assets/c7546e6c-321d-4f36-9086-34ee10f5dcb2" />
 
 
@@ -56,9 +60,11 @@ StudyMate bekerja dalam **satu siklus pembelajaran yang utuh**, dari input menta
 - [ ] **Smart Reminder (+5%)** — Notifikasi cerdas beberapa hari sebelum ujian untuk sesi review
 - [ ] **Animations (+5%)** — Transisi antar screen, loading saat proses AI, indikator progress
 
+
 **Total target bonus: +20%**
 
 ---
+
 
 ## 🗂️ Navigasi & Halaman
 
