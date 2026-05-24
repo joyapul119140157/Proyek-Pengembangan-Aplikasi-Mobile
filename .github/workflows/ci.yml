@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-project/123140043-119140157-StudyMate_2
+  project/123140043-119140157-StudyMate_2
     branches: [ main, development,project/123140043-119140157-StudyMate ]
   pull_request:
     branches: [ main, development,project/123140043-119140157-StudyMate ]
