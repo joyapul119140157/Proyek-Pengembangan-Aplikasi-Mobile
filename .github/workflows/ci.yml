@@ -24,18 +24,15 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
       - name: Create local.properties
         run: |
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > local.properties
 
       - name: Build project
-        run: ./gradlew build --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Run unit tests
-        run: ./gradlew allTests --no-daemon
+        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon
 
       - name: Build debug APK
         run: ./gradlew :composeApp:assembleDebug --no-daemon
