@@ -150,6 +150,10 @@ android {
     }
 }
 
+compose.resources {
+    packageOfResClass = "com.studymate"
+}
+
 sqldelight {
     databases {
         create("StudyMateDatabase") {

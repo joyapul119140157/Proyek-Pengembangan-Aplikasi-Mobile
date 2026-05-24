@@ -19,8 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.studymate.domain.model.Note
 import kotlinx.coroutines.flow.collectLatest
-import noteai.composeapp.generated.resources.Res
-import noteai.composeapp.generated.resources.app_logo
+import com.studymate.Res
+import com.studymate.app_logo
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)

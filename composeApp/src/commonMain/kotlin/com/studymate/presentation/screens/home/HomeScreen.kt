@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,13 +39,14 @@ import com.studymate.domain.model.Note
 import com.studymate.presentation.theme.GradientEnd
 import com.studymate.presentation.theme.GradientStart
 import com.studymate.presentation.theme.TextGray
-import noteai.composeapp.generated.resources.Res
-import noteai.composeapp.generated.resources.app_logo
+import com.studymate.Res
+import com.studymate.app_logo
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -55,10 +57,31 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 is HomeUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 is HomeUiState.Error -> ErrorContent(state.message, onRetry = { viewModel.retry() })
                 is HomeUiState.Success -> {
-                    HomeContent(
-                        state = state,
-                        onRefreshMantra = { viewModel.refreshMantra() }
-                    )
+                    // Header Section (Z-Index 1)
+                    MockupHeaderSection(scrollOffset = scrollState.value)
+
+                    // Scrollable Content (Z-Index 0)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                    ) {
+                        // Spacer matched to max header height
+                        Spacer(modifier = Modifier.height(300.dp))
+
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(28.dp)
+                        ) {
+                            DailyMantraSection(state.dailyMantra) {
+                                viewModel.refreshMantra()
+                            }
+                            DailyStreakSection(state.currentStreak)
+                            QuickSnippetsSection(state.recentNotes)
+                            LastNoteSection(state.recentNotes.firstOrNull())
+                            Spacer(modifier = Modifier.height(100.dp))
+                        }
+                    }
                 }
             }
         }
@@ -66,62 +89,47 @@ fun HomeScreen(viewModel: HomeViewModel) {
 }
 
 @Composable
-private fun HomeContent(
-    state: HomeUiState.Success,
-    onRefreshMantra: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        MockupHeaderSection()
+private fun MockupHeaderSection(scrollOffset: Int) {
+    val maxHeight = 300.dp
+    val minHeight = 0.dp
+    
+    // Calculate dynamic height based on scroll
+    val headerHeight = (maxHeight - (scrollOffset / 2).dp).coerceAtLeast(minHeight)
+    val alpha = (1f - (scrollOffset / 400f)).coerceIn(0f, 1f)
 
-        Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(28.dp)
-        ) {
-            DailyMantraSection(state.dailyMantra, onRefreshMantra)
-            DailyStreakSection(state.currentStreak)
-            QuickSnippetsSection(state.recentNotes)
-            LastNoteSection(state.recentNotes.firstOrNull())
-            Spacer(modifier = Modifier.height(100.dp))
-        }
-    }
-}
-
-@Composable
-private fun MockupHeaderSection() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(320.dp) // Ubah angka ini untuk tinggi kotak
-            .clip(RoundedCornerShape(bottomStart = 45.dp, bottomEnd = 45.dp))
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF9C27B0), Color(0xFFE91E63))
-                )
-            )
-    ) {
-        // Logo dibuat FULL memenuhi kotak
-        Image(
-            painter = painterResource(Res.drawable.app_logo),
-            contentDescription = "StudyMate Logo",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop // 'Crop' untuk memenuhi seluruh kotak
-        )
-        
-        // Notification bell tetap di pojok atas
-        IconButton(
-            onClick = {},
+    if (headerHeight > 0.dp) {
+        Box(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 40.dp, end = 20.dp)
-                .size(45.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.15f))
+                .fillMaxWidth()
+                .height(headerHeight)
+                .clip(RoundedCornerShape(bottomStart = 45.dp, bottomEnd = 45.dp))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFF9C27B0), Color(0xFFE91E63))
+                    )
+                )
+                .graphicsLayer {
+                    this.alpha = alpha
+                }
         ) {
-            Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.White)
+            Image(
+                painter = painterResource(Res.drawable.app_logo),
+                contentDescription = "StudyMate Logo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            
+            IconButton(
+                onClick = {},
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 40.dp, end = 20.dp)
+                    .size(45.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.15f))
+            ) {
+                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color.White)
+            }
         }
     }
 }

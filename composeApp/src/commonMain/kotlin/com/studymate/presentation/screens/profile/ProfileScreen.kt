@@ -18,8 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.studymate.domain.model.UserProfile
-import noteai.composeapp.generated.resources.Res
-import noteai.composeapp.generated.resources.app_logo
+import com.studymate.Res
+import com.studymate.app_logo
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)

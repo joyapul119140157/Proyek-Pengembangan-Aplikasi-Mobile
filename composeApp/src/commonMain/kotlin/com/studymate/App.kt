@@ -1,6 +1,5 @@
 package com.studymate
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import com.studymate.presentation.navigation.AppNavHost
