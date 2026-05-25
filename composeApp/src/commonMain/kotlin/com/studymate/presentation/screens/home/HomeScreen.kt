@@ -228,7 +228,12 @@ private fun DailyMantraSection(mantra: String, onRefreshClick: () -> Unit) {
 @Composable
 private fun DailyStreakSection(streak: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Daily Streak", color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(
+            "Daily Streak", 
+            color = MaterialTheme.colorScheme.onBackground, 
+            style = MaterialTheme.typography.titleMedium, 
+            fontWeight = FontWeight.Bold
+        )
         Card(
             modifier = Modifier.fillMaxWidth().height(140.dp),
             shape = RoundedCornerShape(16.dp)
